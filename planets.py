@@ -7,8 +7,8 @@ from converters import numformat, to_dhm
 
 """
 TODO:
-- Suggest next upgrade (cheapest per cc, then cr per cc)
-- Detailed upgrades chart (including CC, hydro cap)
+- Subtract a fixed amount of time from all upgrade timers
+- Remove prints from check_planet_upgrade_status()
 """
 
 
@@ -87,7 +87,6 @@ async def upgrade_planet(inter, planet_name, duration):
         return
 
     # Validate duration
-    duration = int(duration)
     if duration <= 0:
         duration = _upgrade_duration(planets[pnum][1])
     
@@ -98,6 +97,7 @@ async def upgrade_planet(inter, planet_name, duration):
 
     # Respond
     new_dhm = to_dhm(duration)
+    _, fut_cc, _, _ = _compute_cap(planets)
 
     if old_upgrade_time is not None:
         old_dhm = to_dhm(old_upgrade_time - int(time()))
@@ -113,7 +113,44 @@ async def upgrade_planet(inter, planet_name, duration):
             f"Started the upgrade timer for Tier "
             f"{PORDER[pnum][1]}{PORDER[pnum][2]} "
             f"{PORDER[pnum][0].name} planet __{planet_name}__ to finish at "
-            f"<t:{planets[pnum][2]}:F> ({new_dhm})."
+            f"<t:{planets[pnum][2]}:F> ({new_dhm}).\n"
+            f"Upgraded Credit Cap is now {numformat(fut_cc)} CR."
+        )
+
+
+async def shift_upgrade_times(inter, duration):
+    """
+    Shifts all of a player's planet upgrade times by a fixed duration.
+    Used to compensate for TM usage.
+    """
+    global PLAYER_INFO
+    
+    caller_id = str(inter.author.id)
+    create_player_if_not_exists(caller_id)
+
+    # Validate duration
+    if duration <= 0:
+        await inter.response.send_message(
+            "Need to shift by a non-zero duration."
+        )
+        return
+
+    # Shift
+    changed = False
+    for i in range(len(PORDER)):
+        if PLAYER_INFO[caller_id]["planets"][i][2] is not None:
+            PLAYER_INFO[caller_id]["planets"][i][2] -= duration
+            changed = True
+    
+    if changed:
+        _write_player_info()
+        dhm = to_dhm(duration)
+        await inter.response.send_message(
+            f"Shifted all upgrade timers ahead by {dhm}."
+        )
+    else:
+        await inter.response.send_message(
+            "No upgrade timers to shift."
         )
 
 
@@ -198,7 +235,7 @@ async def list_planets(inter):
     await inter.response.send_message("\n".join(output))
 
 
-async def upgrade_details(inter):
+async def upgrade_details(inter, raw=False):
     """
     Lists upgrading planets and details.
     Suggests next planet upgrade.
@@ -209,24 +246,17 @@ async def upgrade_details(inter):
     planets = PLAYER_INFO[caller_id]["planets"]
 
     # Counters and output
-    cur_cc, fut_cc = 0, 0
-    cur_hc, fut_hc = 0, 0
     output = []
     next_upgr = []
 
-    # Loop
+    # Check all planets
     for i in range(len(PORDER)):
         ptype, ptier, disc = PORDER[i]
         pname, level, upgr_until = planets[i]
         cc = _credit_storage(level)
         hc = _hydro_storage(level)
 
-        cur_cc += cc
-        cur_hc += hc
-
         if upgr_until is not None:
-            fut_cc += _credit_storage(level + 1)
-            fut_hc += _hydro_storage(level + 1)
             dhm = to_dhm(upgr_until - int(time()))
             output.append((
                 f"{PTYPE_EMOJI[ptype.value]}{ptier}{disc} __{pname}__ "
@@ -235,8 +265,6 @@ async def upgrade_details(inter):
                 upgr_until - int(time())
             ))
         else:
-            fut_cc += cc
-            fut_hc += hc
             if level < _max_planet_level(ptier):
                 cost = _upgrade_cost(level)
                 cr_incr = (
@@ -270,6 +298,9 @@ async def upgrade_details(inter):
         output = "\n\n" + "\n\n".join(list(zip(*output))[0]) + "\n\n"
     else:
         output = ""
+
+    # Compute caps
+    cur_cc, fut_cc, cur_hc, fut_hc = _compute_cap(planets)
     
     upgraded_cap = (
         f"Upgraded Credit Cap: {numformat(fut_cc)} CR\n"
@@ -335,16 +366,18 @@ async def check_planet_upgrade_status(channel):
         for i in range(len(PORDER)):
             planet = PLAYER_INFO[pid]["planets"][i]
             if planet[2] is not None and planet[2] <= cur_time:
-                # Notify
-                if PLAYER_INFO[pid]["settings"]["ping_when_upgraded"]:
-                    await channel.send(
-                        f"<@{pid}> {planet[0]} completed upgrade to level "
-                        f"{planet[1] + 1}."
-                    )
                 # Edit
                 PLAYER_INFO[pid]["planets"][i] = \
                     [planet[0], planet[1] + 1, None]
                 changed = True
+                # Notify
+                if PLAYER_INFO[pid]["settings"]["ping_when_upgraded"]:
+                    cur_cc, _, _, _ = _compute_cap(PLAYER_INFO[pid]["planets"])
+                    await channel.send(
+                        f"<@{pid}> {planet[0]} completed upgrade to level "
+                        f"{planet[1] + 1}.\n"
+                        f"Current Credit Cap is now {numformat(cur_cc)} CR."
+                    )
     
     if changed:
         _write_player_info()
@@ -470,3 +503,31 @@ def _max_planet_level(ptier: int):
         print("Invalid tier.")
         return 0
     return [0, 15, 20, 35, 50][ptier]
+
+
+def _compute_cap(planets: list):
+    """
+    Returns the current and upgraded credit and hydro cap.
+    """
+    # Counters
+    cur_cc, fut_cc = 0, 0
+    cur_hc, fut_hc = 0, 0
+
+    # Check all planets
+    for i in range(len(PORDER)):
+        ptype, ptier, disc = PORDER[i]
+        pname, level, upgr_until = planets[i]
+        cc = _credit_storage(level)
+        hc = _hydro_storage(level) if ptype != PTYPE.Fire else 0
+
+        cur_cc += cc
+        cur_hc += hc
+
+        if upgr_until is not None:
+            fut_cc += _credit_storage(level + 1)
+            fut_hc += _hydro_storage(level + 1) if ptype != PTYPE.Fire else 0
+        else:
+            fut_cc += cc
+            fut_hc += hc
+    
+    return cur_cc, fut_cc, cur_hc, fut_hc
