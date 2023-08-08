@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 
 import converters
 import planets
+import research
 
 
 logging.basicConfig(level=logging.WARNING)
@@ -118,6 +119,23 @@ async def list_planets(inter):
 ))
 async def upgrade_details(inter):
     await planets.upgrade_details(inter)
+
+
+@hs.sub_command(description=(
+    "Computes how many arts you still need to research."
+))
+async def artifact_count(
+    inter,
+    art_level: commands.Range[1, 11],
+    trade: str,
+    mining: str,
+    weapons: str,
+    shields: str,
+    support: str
+):
+    await research.artifact_count(
+        inter, art_level, trade, mining, weapons, shields, support
+    )
 
 
 @hs.sub_command_group()

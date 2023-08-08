@@ -5,13 +5,6 @@ from time import time
 from converters import numformat, to_dhm
 
 
-"""
-TODO:
-- Subtract a fixed amount of time from all upgrade timers
-- Remove prints from check_planet_upgrade_status()
-"""
-
-
 PTYPE = Enum("PTYPE", ["Desert", "Fire", "Water", "Terran", "Gas", "Ice"])
 PTYPE_EMOJI = ["", "🏜️", "🔥", "💧", "🌎", "🪐", "🧊"]
 

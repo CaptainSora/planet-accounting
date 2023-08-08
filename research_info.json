@@ -1,0 +1,72 @@
+{
+    "Trade": [
+        ["Cargo Bay Extension", 1, 80000],
+        ["Shipment Computer", 2, 60000],
+        ["Trade Boost", 3, 60000],
+        ["Rush", 3, 60000],
+        ["Trade Burst", 4, 40000],
+        ["Shipment Drone", 5, 32000],
+        ["Offload", 5, 20000],
+        ["Shipment Beam", 6, 10000],
+        ["Entrust", 6, 40000],
+        ["Dispatch", 6, 5000],
+        ["Recall", 7, 1],
+        ["Relic Drone", 7, 4000]
+    ],
+    "Mining": [
+        ["Mining Boost", 1, 80000],
+        ["Hydrogen Bay Extension", 2, 40000],
+        ["Enrich", 2, 70000],
+        ["Remote Mining", 3, 30000],
+        ["Hydrogen Upload", 4, 40000],
+        ["Mining Unity", 4, 20000],
+        ["Crunch", 5, 15000],
+        ["Genesis", 5, 20000],
+        ["Hydrogen Rocket", 8, 4000],
+        ["Mining Drone", 9, 10000]
+    ],
+    "Weapons": [
+        ["Weak Battery", 0, 0],
+        ["Battery", 1, 70000],
+        ["Laser", 2, 70000],
+        ["Mass Battery", 3, 50000],
+        ["Dual Laser", 4, 32000],
+        ["Barrage", 5, 35000],
+        ["Dart", 9, 3000]
+    ],
+    "Shields": [
+        ["Alpha", 1, 400],
+        ["Delta", 2, 60000],
+        ["Passive", 3, 50000],
+        ["Omega", 4, 30000],
+        ["Mirror", 5, 20000],
+        ["Blast", 6, 50000],
+        ["Area", 8, 8000]
+    ],
+    "Support": [
+        ["EMP", 2, 80000],
+        ["Teleport", 2, 60000],
+        ["Red Star Life Extender", 2, 40000],
+        ["Remote Repair", 2, 60000],
+        ["Time Warp", 3, 60000],
+        ["Unity", 3, 60000],
+        ["Sanctuary", 3, 1],
+        ["Stealth", 4, 60000],
+        ["Fortify", 4, 60000],
+        ["Impulse", 4, 40000],
+        ["Alpha Rocket", 4, 40000],
+        ["Salvage", 5, 20000],
+        ["Suppress", 5, 50000],
+        ["Destiny", 6, 20000],
+        ["Barrier", 6, 15000],
+        ["Vengeance", 7, 12000],
+        ["Delta Rocket", 7, 45000],
+        ["Leap", 8, 5000],
+        ["Bond", 8, 15000],
+        ["Laser Turret", 8, 15000],
+        ["Alpha Drone", 9, 4000],
+        ["Suspend", 9, 4000],
+        ["Omega Rocket", 10, 4500],
+        ["Remote Bomb", 11, 3500]
+    ]
+}
